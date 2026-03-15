@@ -1,0 +1,24 @@
+{
+  "name": "react-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "extract": "i18n-extract extract -s src -o public/locales"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@i18n-plugin/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.0",
+    "@i18n-plugin/unplugin": "workspace:*",
+    "@i18n-plugin/cli": "workspace:*",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "vite": "^4.5.0"
+  }
+}

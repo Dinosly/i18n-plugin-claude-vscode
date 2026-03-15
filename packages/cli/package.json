@@ -1,0 +1,28 @@
+{
+  "name": "@i18n-plugin/cli",
+  "version": "1.0.0",
+  "description": "静态扫描与字典生成工具",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "i18n-extract": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.23.0",
+    "@babel/traverse": "^7.23.0",
+    "@babel/types": "^7.23.0",
+    "@vue/compiler-sfc": "^3.4.0",
+    "glob": "^10.3.0",
+    "commander": "^11.1.0",
+    "chalk": "^4.1.2"
+  },
+  "devDependencies": {
+    "@types/babel__traverse": "^7.20.0",
+    "@types/babel__core": "^7.20.0"
+  }
+}

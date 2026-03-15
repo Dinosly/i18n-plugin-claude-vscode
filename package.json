@@ -1,0 +1,19 @@
+{
+  "name": "@i18n-plugin/monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "企业级前端全自动化 I18n 架构",
+  "scripts": {
+    "build": "pnpm -r --filter='./packages/*' run build",
+    "dev": "pnpm -r --parallel run dev",
+    "clean": "pnpm -r run clean && rm -rf node_modules"
+  },
+  "keywords": ["i18n", "internationalization", "vue", "react", "unplugin"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3",
+    "tsup": "^8.0.1"
+  }
+}

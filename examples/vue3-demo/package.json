@@ -1,0 +1,21 @@
+{
+  "name": "vue3-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "extract": "i18n-extract extract -s src -o public/locales"
+  },
+  "dependencies": {
+    "vue": "^3.4.0",
+    "@i18n-plugin/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.0.0",
+    "@i18n-plugin/unplugin": "workspace:*",
+    "@i18n-plugin/cli": "workspace:*",
+    "vite": "^4.5.0"
+  }
+}

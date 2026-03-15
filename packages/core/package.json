@@ -1,0 +1,53 @@
+{
+  "name": "@i18n-plugin/core",
+  "version": "1.0.0",
+  "description": "运行时核心 - 语言状态机管理与多框架适配",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./vue3": {
+      "require": "./dist/vue3.js",
+      "import": "./dist/vue3.mjs",
+      "types": "./dist/vue3.d.ts"
+    },
+    "./vue2": {
+      "require": "./dist/vue2.js",
+      "import": "./dist/vue2.mjs",
+      "types": "./dist/vue2.d.ts"
+    },
+    "./react": {
+      "require": "./dist/react.js",
+      "import": "./dist/react.mjs",
+      "types": "./dist/react.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "vue": "^2.0.0 || ^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/vue": "^2",
+    "react": "^18.2.0",
+    "vue": "^3.4.0"
+  }
+}

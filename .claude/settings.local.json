@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm -r list --depth 0)",
+      "Bash(pnpm install:*)",
+      "Bash(rm -rf node_modules pnpm-lock.yaml)",
+      "Bash(find packages:*)",
+      "Bash(pnpm store:*)"
+    ]
+  }
+}

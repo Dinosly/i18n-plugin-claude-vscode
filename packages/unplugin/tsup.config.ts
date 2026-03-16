@@ -12,5 +12,5 @@ export default defineConfig({
   clean: true,
   splitting: false,
   sourcemap: true,
-  external: ['vite', 'webpack', 'rollup']
+  external: ['vite', 'webpack', 'rollup', 'vue-template-compiler']
 })

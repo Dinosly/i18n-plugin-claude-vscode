@@ -91,7 +91,7 @@ function transformVue2Template(
   let hasTransform = false;
   const transformed = new Set<number>();
 
-  // 1. 转换纯文本节点中的中文（不在标签内）
+  // 1. 转换纯文本节点中的中文
   const textNodeRegex = />([^<>]*[\u4e00-\u9fa5][^<>]*)</g;
   let match;
 
@@ -115,12 +115,16 @@ function transformVue2Template(
       transformed.add(actualStart);
       hasTransform = true;
     } catch (e: any) {
-      console.warn(`[transformVue2Template] Failed to transform text:`, e.message);
+      console.warn(
+        `[transformVue2Template] Failed to transform text:`,
+        e.message,
+      );
     }
   }
 
   // 2. 转换属性中的中文
-  const attrRegex = /\b(placeholder|title|alt|label)="([^"]*[\u4e00-\u9fa5][^"]*)"/g;
+  const attrRegex =
+    /\b(placeholder|title|alt|label)="([^"]*[\u4e00-\u9fa5][^"]*)"/g;
 
   while ((match = attrRegex.exec(content)) !== null) {
     const attrName = match[1];
@@ -135,11 +139,18 @@ function transformVue2Template(
     const escapedValue = attrValue.replace(/'/g, "\\'");
 
     try {
-      s.overwrite(actualStart, actualEnd, `:${attrName}="$t('${escapedValue}')"`);
+      s.overwrite(
+        actualStart,
+        actualEnd,
+        `:${attrName}="$t('${escapedValue}')"`,
+      );
       transformed.add(actualStart);
       hasTransform = true;
     } catch (e: any) {
-      console.warn(`[transformVue2Template] Failed to transform attr:`, e.message);
+      console.warn(
+        `[transformVue2Template] Failed to transform attr:`,
+        e.message,
+      );
     }
   }
 
@@ -295,43 +306,51 @@ function transformVue2TemplateBlock(code: string, id: string): string | null {
     // 1. 检测标签开始 <
     if (char === '<') {
       // 检查是否是注释
-      if (code.substring(i, i + 4) === '<!--') {
-        const commentEnd = code.indexOf('-->', i);
+      if (code.substring(i, i + 4) === "<!--") {
+        const commentEnd = code.indexOf("-->", i);
         if (commentEnd === -1) break;
         i = commentEnd + 3;
         continue;
       }
 
       // 跳过 script 标签
-      if (code.substring(i, i + 8) === '<script>' || code.substring(i, i + 9) === '</script>') {
-        const scriptEnd = code.indexOf('>', i);
+      if (
+        code.substring(i, i + 8) === "<script>" ||
+        code.substring(i, i + 9) === "</script>"
+      ) {
+        const scriptEnd = code.indexOf(">", i);
         if (scriptEnd === -1) break;
         i = scriptEnd + 1;
         continue;
       }
 
       // 跳过 style 标签
-      if (code.substring(i, i + 7) === '<style>' || code.substring(i, i + 8) === '</style>') {
-        const styleEnd = code.indexOf('>', i);
+      if (
+        code.substring(i, i + 7) === "<style>" ||
+        code.substring(i, i + 8) === "</style>"
+      ) {
+        const styleEnd = code.indexOf(">", i);
         if (styleEnd === -1) break;
         i = styleEnd + 1;
         continue;
       }
 
       // 跳过 </template> 结束标签
-      if (code.substring(i, i + 11) === '</template>') {
+      if (code.substring(i, i + 11) === "</template>") {
         i = i + 11;
         continue;
       }
 
-      const tagEnd = code.indexOf('>', i);
+      const tagEnd = code.indexOf(">", i);
       if (tagEnd === -1) break;
 
       const tagContent = code.substring(i, tagEnd + 1);
 
-      // 检查标签内的属性 (只在开始标签中)
-      if (!tagContent.startsWith('</') && !tagContent.endsWith('/>')) {
-        const attrMatches = tagContent.matchAll(/\b(placeholder|title|alt|label)="([^"]*[\u4e00-\u9fa5][^"]*)"/g);
+      // 检查标签内的属性 (开始标签和自闭合标签都处理)
+      if (!tagContent.startsWith("</")) {
+        const attrMatches = tagContent.matchAll(
+          /\b(placeholder|title|alt|label)="([^"]*[\u4e00-\u9fa5][^"]*)"/g,
+        );
 
         for (const match of attrMatches) {
           const attrName = match[1];
@@ -340,7 +359,11 @@ function transformVue2TemplateBlock(code: string, id: string): string | null {
           const attrEnd = attrStart + match[0].length;
 
           const escapedValue = attrValue.replace(/'/g, "\\'");
-          s.overwrite(attrStart, attrEnd, `:${attrName}="$t('${escapedValue}')"`);
+          s.overwrite(
+            attrStart,
+            attrEnd,
+            `:${attrName}="$t('${escapedValue}')"`,
+          );
           hasTransform = true;
         }
       }

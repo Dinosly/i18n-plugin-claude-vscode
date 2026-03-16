@@ -10,15 +10,9 @@ const generate = (generateModule as any).default || generateModule
 const CHINESE_REGEX = /[\u4e00-\u9fa5]/
 
 interface TransformOptions {
-  /** * 是否为纯表达式模式 (为 Vue template 的 {{ }} 准备)
-   * 开启后：不注入 import，强制使用 $t，去除末尾分号
-   */
   isExpression?: boolean;
 }
 
-/**
- * 转换 JS/TS/JSX/TSX 代码
- */
 export function transformJS(
   code: string,
   id: string,
@@ -26,11 +20,15 @@ export function transformJS(
 ): string | null {
   const { isExpression = false } = options;
 
+  // 跳过 .vue 文件 (完整 SFC),这些由 transformVue 处理
+  // 只处理 .vue?vue&type=script (vue-loader 提取的 script 块)
+  if (id.endsWith('.vue') && !id.includes('?vue&type=')) {
+    return null;
+  }
+
   if (!CHINESE_REGEX.test(code)) return null;
 
   try {
-    // 表达式模式下，为了让 Babel 能够解析 "status === 1 ? '成功' : '失败'"
-    // 依然作为普通模块解析，它会被解析为一个 ExpressionStatement
     const ast = parser.parse(code, {
       sourceType: "module",
       plugins: ["jsx", "typescript", "decorators-legacy"],
@@ -39,14 +37,72 @@ export function transformJS(
     let hasTransform = false;
     let needsImport = false;
 
-    // 💡 动态决定函数名：表达式模式直接用 $t，模块模式用防冲突的 __i18n_t__
+    // 检测是否处理 Vue SFC 的 script (包括 .vue?vue&type=script 和 .vue?vue&type=script&setup=true)
+    // 对于插值表达式处理(isExpression=true),不视为Vue SFC
+    const isVueScriptBlock = id.includes('.vue?vue&type=script');
+
+    console.log(`[transformJS] id: ${id}, isVueScriptBlock: ${isVueScriptBlock}, isExpression: ${isExpression}`);
+
+    // 检查节点是否已经是某个 CallExpression 的参数（防止重复转换）
+    // 只跳过我们自己的翻译函数调用，如 __i18n_t__、$t、this.$t 等
+    const isAlreadyTranslated = (path: any): boolean => {
+      let current = path.parent;
+      while (current) {
+        if (t.isCallExpression(current)) {
+          const callee = current.callee;
+          // 检查是否是翻译函数
+          if (t.isIdentifier(callee)) {
+            if (callee.name === importName || callee.name === '$t') {
+              return true;
+            }
+          }
+          // 检查是否是 this.$t 这种成员表达式
+          if (t.isMemberExpression(callee)) {
+            if (t.isThisExpression(callee.object) && t.isIdentifier(callee.property) && callee.property.name === '$t') {
+              return true;
+            }
+          }
+        }
+        if (current.parent) {
+          current = current.parent;
+        } else {
+          break;
+        }
+      }
+      return false;
+    };
+
     const importName = isExpression ? "$t" : "__i18n_t__";
+
+    // 检测是否是 Vue 3 script setup
+    const isVue3ScriptSetup = id.includes('setup=true');
+
+    // 创建函数调用表达式
+    // - Vue 2 script 块: 使用 this.$t
+    // - Vue 3 script setup: 使用 $t (全局函数)
+    // - React/其他: 使用 __i18n_t__ 或 $t (通过导入)
+    const createTCall = (args: any[]) => {
+      if (isVueScriptBlock && !isExpression) {
+        if (isVue3ScriptSetup) {
+          // Vue 3 script setup: 使用 $t 作为全局函数
+          return t.callExpression(t.identifier("$t"), args);
+        } else {
+          // Vue 2: 使用 this.$t
+          return t.callExpression(
+            t.memberExpression(t.thisExpression(), t.identifier("$t")),
+            args
+          );
+        }
+      }
+      return t.callExpression(t.identifier(importName), args);
+    };
 
     traverse(ast, {
       Program: {
         exit(path) {
-          // 💡 表达式模式下，绝对不能注入 import
-          if (needsImport && !isExpression) {
+          // 仅在非Vue script块且非表达式模式时添加导入
+          // Vue 3 script setup 使用全局 $t，不需要导入
+          if (needsImport && !isExpression && !isVueScriptBlock) {
             const hasImport = path.node.body.some(
               (node) =>
                 t.isImportDeclaration(node) &&
@@ -71,12 +127,9 @@ export function transformJS(
 
       StringLiteral(path) {
         const { value } = path.node;
-        const parent = path.parent;
-        if (
-          t.isCallExpression(parent) &&
-          t.isIdentifier(parent.callee) &&
-          parent.callee.name === importName
-        ) {
+
+        // 如果已经是某个 CallExpression 的参数（任何函数），跳过
+        if (isAlreadyTranslated(path)) {
           return;
         }
 
@@ -85,7 +138,7 @@ export function transformJS(
           !hasIgnoreComment(path.node.leadingComments)
         ) {
           path.replaceWith(
-            t.callExpression(t.identifier(importName), [
+            createTCall([
               t.stringLiteral(value),
             ]),
           );
@@ -95,6 +148,11 @@ export function transformJS(
       },
 
       TemplateLiteral(path) {
+        // 如果已经是某个 CallExpression 的参数，跳过
+        if (isAlreadyTranslated(path)) {
+          return;
+        }
+
         const { quasis, expressions } = path.node;
         let hasChineseText = false;
 
@@ -110,9 +168,8 @@ export function transformJS(
             if (index < expressions.length) templateText += `{${index}}`;
           });
 
-          // @ts-ignore
           path.replaceWith(
-            t.callExpression(t.identifier(importName), [
+            createTCall([
               t.stringLiteral(templateText),
               ...expressions,
             ]),
@@ -131,7 +188,7 @@ export function transformJS(
         ) {
           path.replaceWith(
             t.jsxExpressionContainer(
-              t.callExpression(t.identifier(importName), [
+              createTCall([
                 t.stringLiteral(text),
               ]),
             ),
@@ -150,7 +207,7 @@ export function transformJS(
           const value = path.node.value;
           if (t.isStringLiteral(value) && CHINESE_REGEX.test(value.value)) {
             path.node.value = t.jsxExpressionContainer(
-              t.callExpression(t.identifier(importName), [
+              createTCall([
                 t.stringLiteral(value.value),
               ]),
             );
@@ -161,11 +218,12 @@ export function transformJS(
       },
     });
 
+    console.log(`[transformJS] id: ${id}, hasTransform: ${hasTransform}, needsImport: ${needsImport}`);
+
     if (!hasTransform) return null;
 
-    // 💡 表达式模式下，直接只 generate 表达式的 AST 节点，避免包裹和分号
+    // 表达式模式下，直接只 generate 表达式的 AST 节点
     if (isExpression) {
-      // 因为传入的是单个表达式，Babel 解析成 Program > ExpressionStatement
       const exprNode = (ast.program.body[0] as t.ExpressionStatement)
         .expression;
       const output = generate(exprNode, { retainLines: true, compact: false });

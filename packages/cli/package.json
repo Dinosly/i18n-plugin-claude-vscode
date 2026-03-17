@@ -2,6 +2,18 @@
   "name": "@i18n-plugin/cli",
   "version": "1.0.0",
   "description": "静态扫描与字典生成工具",
+  "keywords": [
+    "i18n",
+    "internationalization",
+    "cli",
+    "extract"
+  ],
+  "author": "dinosly",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dinosly/i18n-plugin-claude-vscode.git"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {

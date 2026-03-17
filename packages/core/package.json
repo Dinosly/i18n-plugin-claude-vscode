@@ -3,6 +3,19 @@
   "version": "1.0.0",
   "description": "运行时核心 - 语言状态机管理与多框架适配",
   "main": "./dist/index.js",
+  "keywords": [
+    "i18n",
+    "internationalization",
+    "vue",
+    "react",
+    "l10n"
+  ],
+  "author": "dinosly",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dinosly/i18n-plugin-claude-vscode.git"
+  },
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {

@@ -36,6 +36,7 @@ setTimeout(() => loadLocaleMessages("zh-CN"), 0);
 
 // 导出切换语言的函数
 export async function switchLocale(locale: string) {
-  i18n.setLocale(locale);
+  // 先加载语言包，再设置locale，确保订阅者收到通知时消息已加载
   await loadLocaleMessages(locale);
+  i18n.setLocale(locale);
 }

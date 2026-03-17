@@ -12,7 +12,10 @@ const CHINESE_REGEX = /[\u4e00-\u9fa5]/;
  * @param vueVersion 2 或 3，决定使用哪个模板编译器
  */
 export function transformVue(code: string, id: string, vueVersion: 2 | 3 = 3): string | null {
+  console.log("[transformVue] called for:", id, "vueVersion:", vueVersion);
+
   if (!CHINESE_REGEX.test(code)) {
+    console.log("[transformVue] no Chinese, returning null");
     return null;
   }
 

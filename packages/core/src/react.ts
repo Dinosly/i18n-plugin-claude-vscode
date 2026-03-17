@@ -18,9 +18,13 @@ export function createReactI18n(config: I18nConfig): I18nCore {
  */
 export function useI18n() {
   const i18nCore = getGlobalI18n();
+  // 初始化时直接使用i18nCore.locale,确保同步
   const [locale, setLocale] = useState(i18nCore.locale);
 
   useEffect(() => {
+    // 立即同步当前locale,避免首次渲染延迟
+    setLocale(i18nCore.locale);
+
     console.log('[react] useEffect setup, subscribing...');
     // 订阅语言变更事件
     const unsubscribe = i18nCore.subscribe(() => {
